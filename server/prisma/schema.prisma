@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  PHOTOGRAPHER
+  MEMBER
+  VIEWER
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+enum NotifType {
+  LIKE
+  COMMENT
+  TAG
+}
+
+model User {
+  id           String         @id @default(uuid())
+  name         String
+  email        String         @unique
+  password     String
+  role         Role           @default(VIEWER)
+  avatarUrl    String?
+  createdAt    DateTime       @default(now())
+
+  events        Event[]
+  media         Media[]
+  likes         Like[]
+  comments      Comment[]
+  favourites    Favourite[]
+  notifsSent    Notification[] @relation("actor")
+  notifsReceived Notification[] @relation("recipient")
+}
+
+model Event {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  category    String    @default("General")
+  date        DateTime
+  isPublic    Boolean   @default(true)
+  coverUrl    String?
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  media       Media[]
+}
+
+model Media {
+  id           String     @id @default(uuid())
+  url          String
+  thumbnailUrl String?
+  type         MediaType  @default(PHOTO)
+  tags         String[]
+  likesCount   Int        @default(0)
+  event        Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId      String
+  uploader     User       @relation(fields: [uploaderId], references: [id])
+  uploaderId   String
+  createdAt    DateTime   @default(now())
+
+  likes        Like[]
+  comments     Comment[]
+  favourites   Favourite[]
+  notifications Notification[]
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, mediaId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  body      String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  createdAt DateTime @default(now())
+}
+
+model Favourite {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, mediaId])
+}
+
+model Notification {
+  id          String     @id @default(uuid())
+  recipient   User       @relation("recipient", fields: [recipientId], references: [id])
+  recipientId String
+  actor       User       @relation("actor", fields: [actorId], references: [id])
+  actorId     String
+  type        NotifType
+  media       Media?     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId     String?
+  isRead      Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+}

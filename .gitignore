@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables (Crucial to prevent leaks)
+.env
+.env.local
+.env.production
+.env.development.local
+
+# Production build outputs
+client/dist/
+
+# System files
+.DS_Store
+Thumbs.db
